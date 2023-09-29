@@ -1,0 +1,504 @@
+---
+title: "Template Title"
+author: "Your Name"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: cerulean
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Carregar paquets
+
+```{r message = F, warning = F}
+library(readxl) # Carregar paquets
+library(openxlsx)
+library(tidyverse)
+```
+
+
+# Metadades
+
+```{r}
+# A canviar depenent de l'any
+path_fitxer <- "C:/Users/45884349q/OneDrive - Generalitat de Catalunya/Cesc/Database"
+nom_fitxer <- "PGME/Expedients/Expedients.xlsx"
+
+# Per a preprocessar ids amb municipis
+filter_mun_regex_base <- "\\s*\\([^\\)]+\\)"
+```
+
+
+
+# Carregar dades
+
+```{r}
+# Excel
+raw <- read_excel(file.path(path_fitxer, nom_fitxer), 
+                  guess_max = 5000)
+
+# Províncies
+raw_prov <- read.csv(file.path(path_fitxer, "Geografia Catalunya/dades_idescat/noms.csv"))
+
+# Llista de tests per tenir en compte al final
+test <- list()
+```
+
+
+Preprocessament raw: rename cols:
+
+```{r}
+old_col_names <- colnames(raw)
+
+raw <- raw |> 
+  rename_with(~ tolower(gsub(" ", "_", .x, fixed = TRUE))) |> 
+  rename(municipi = municipi_fets_fets)
+```
+
+
+# Visualització de dades
+
+```{r eval = F}
+# Visió general
+
+str(raw)
+raw |> 
+  count(municipi) |> 
+  top_n(13) |> 
+  arrange(desc(n))
+
+str(raw_prov)
+raw_prov |> 
+  tibble() |> 
+  count(municipi) |> 
+  top_n(13) |> 
+  arrange(desc(n))
+```
+
+# Preprocessament
+
+## Províncies
+
+### Veure com va de moment
+
+```{r}
+dades <- raw[, "municipi"] |> 
+  distinct(municipi) |> 
+  filter(!is.na(municipi))
+
+municipis <- raw_prov |> distinct(municipi, .keep_all = TRUE)
+
+x <- dades |> 
+  left_join(municipis)
+```
+
+Exploració
+
+```{r}
+x |> 
+  filter(!is.na(municipi)) |> 
+  filter(is.na(provincia))
+```
+
+
+```{r}
+preprocessar_prov_mun <- function(dades_base, 
+                                  dades_sup,
+                                  regex_base,
+                                  regex_sup = NULL,
+                                  id_base = municipi, 
+                                  id_sup = municipi) {
+  # Regex per arreglar id provincies
+  if(is.null(regex_sup)) {
+      regex_sup <- paste(
+        ", el$",
+        ", la$",
+        ", els$",
+        ", les$",
+        ", l'$",
+        sep = "|")
+  }
+
+  # Prep id municipis de fitxer de suport
+  connector_sup <- dades_sup |> 
+    mutate("{{id_sup}}" := tolower({{ id_sup }})) |> # lower
+    distinct({{id_sup}}, .keep_all = TRUE) |>      # eliminar barcelones extres d'area policial
+    mutate("{{id_sup}}" := str_remove(             # netejar id amb regex
+      {{ id_sup }},
+      regex_sup))
+  
+  
+  # Prep id municipis per fitxer base
+  dades_base <- dades_base |>
+    mutate("{{id_base}}" := tolower({{ id_base }})) |> # lower
+    mutate("{{id_base}}" := str_remove(              # netejar id amb regex
+      string =  {{ id_base }},
+      pattern = regex_base))
+  
+  # Fent el join 
+  join_final <- dades_base |> 
+    left_join(connector_sup, 
+              by = join_by({{id_base}} == {{id_sup}}))
+
+  return(join_final)
+}
+```
+
+Calculem els municipis, només quan nombre municipis és 1:
+
+```{r}
+join_un_municipi <- 
+  preprocessar_prov_mun(
+    dades, 
+    raw_prov |>            # Seleccio dades a enganxar que ens interessin
+      select(municipi, provincia, regioPolicial),
+    filter_mun_regex_base
+  )
+```
+
+Filtrem els elements no trobats, i NAs en municipis:
+
+```{r}
+join_un_municipi |> 
+    filter(is.na(provincia))
+```
+
+
+```{r}
+dades_p_pas1 <- join_un_municipi |> 
+  filter(!is.na(provincia))
+
+# Faig un test per comparar efectivitat (nombre fila) dels mètodes al final
+test[["Test 4: Nombre de cols en mètode municipis"]] <- nrow(dades_p_pas1 |> filter(!is.na(provincia)))
+```
+
+
+Visualitzant files sense coincidencies. Alguns s'han corregit en el fitxer original (perquè són pocs), però com podem veure, encara queden alguns.
+
+```{r}
+# Visualitzant files sense coincidencies
+  # Alguns s'han corregit en el fitxer original (perquè són pocs), encara queden alguns
+
+test[["Test 2: Municipis no trobats en pas 1"]] <- join_un_municipi |> 
+  select(municipi, regió_policial, provincia) |> 
+  filter(is.na(provincia)) |> 
+  filter(!is.na(municipi))
+
+test$`Test 2: Municipis no trobats en pas 1`
+```
+
+
+### Utilitzant RP
+
+#### Preparant dades suport
+
+Preparant id regió provicial per a que coincideixi amb les dades base.
+
+```{r result = "asis"}
+# Afagem els noms de les RP de raw
+
+regions_raw <- raw |> 
+  select(regió_policial) |>  # agafem dades_municipis per evitar doble regions
+  distinct(regió_policial) |> 
+  filter(str_detect(regió_policial, "\\|", negate = TRUE)) |> 
+  arrange(regió_policial)
+
+# Agafem i ordenem els noms de les RP de prov (i enganxem)  
+connector_RP <- raw_prov |> 
+  distinct(regioPolicial) |> 
+  slice(4, 3, 1, 7, 
+        6, 2, 5, 8, 9) |> 
+  cbind(data.frame(regioPolicial_base = regions_raw))
+
+# Print table
+connector_RP |> 
+  knitr::kable(row.names = FALSE)
+```
+
+Fer coincidir la regió policial amb la província on normalment hi ha més municipis.
+
+```{r results='asis'}
+# Guardar RPs noms files
+noms_RP <- table(raw_prov$regioPolicial, raw_prov$provincia) |> 
+  as.data.frame.matrix() |> 
+  rownames()
+
+connector_RP_Prov <- table(raw_prov$regioPolicial, raw_prov$provincia) |> 
+  as.data.frame.matrix() |> 
+  rowwise() |> 
+  # Detectar provincia amb max municipis per cada regio
+  mutate(provincia_max = max(Barcelona, Girona, Lleida, Tarragona)) |> 
+  mutate(provincia_max = list(Barcelona, Girona, Lleida, Tarragona) %in% provincia_max |> 
+           which()) %>%
+  mutate(., provincia_max = nth(colnames(.), provincia_max)) |> 
+  # Detectar provincies en que podria haber errors
+  mutate(extra_prov = max(Barcelona, Girona, Lleida, Tarragona)) |>
+  mutate(extra_prov = list((list(Barcelona, Girona, Lleida, Tarragona) %in% extra_prov) | 
+                      (list(Barcelona, Girona, Lleida, Tarragona) %in% 0))) %>% 
+  mutate(., extra_prov = list(colnames(.)[which(!extra_prov)])) |> 
+  ungroup() |> 
+  # Join d'aquest dataframe amb el connector RP
+  cbind(data.frame(RP = noms_RP)) |> 
+  left_join(connector_RP, by = join_by(RP == regioPolicial))
+
+connector_RP_Prov |> 
+  knitr::kable(row.names = F)
+```
+
+
+#### Aplicant el pas
+
+Primer faig el joint en les dades restants de l'anterior amb municipis:
+
+```{r}
+# test nova implementacio pas2
+
+dades_p_pas2 <- raw |> 
+  # Obtenint dades no utilitzades en pas 1
+  anti_join(dades_p_pas1,
+            by = join_by(codi_expedient == codi_expedient)) |>
+  filter(!is.na(regió_policial)) |> 
+  mutate(provincia = str_replace_all( # Utilitzar regex per els casos de múltiples
+    regió_policial,
+    connector_RP_Prov |> # Aplicant patro per regex
+      mutate(regió_policial = str_replace_all(regió_policial, 
+        c("\\(" = "\\\\(", "\\)" = "\\\\)"))) |> 
+      select(regió_policial, provincia_max) |> 
+      deframe())) |> # Eliminar repetits
+  mutate(provincia = str_split(provincia, "\\|") |> 
+           map(unique)|> 
+           map_chr(str_c, collapse = " | "))
+```
+
+
+Revisant el pas 2:
+
+```{r}
+# Visualitzant files sense coincidencies
+
+test[["Test 3: RPs no trobats en pas 2"]] <- dades_p_pas2 |> 
+  select(municipi, regió_policial, provincia) |> 
+  filter(is.na(provincia)) 
+```
+
+
+### Ajuntant els passos en un últim dataset
+
+Funció per ajuntar dades:
+
+```{r}
+# De ... passar nomes les columnes que volem afegir + l'id!
+pas_final_ajuntar <- function(..., dades_globals, id) {
+  
+  # Ajuntar passos
+  dades_passos <- bind_rows(...)
+  
+  # Afegint passos a raw
+  dades_finals <- dades_globals |>
+    left_join(dades_passos,
+              by = join_by({{ id }} == {{ id }})) |> 
+    arrange(desc({{ id }}))
+  
+  # Nombre columnes per informar
+  sprintf("%i + %i = %i", nrow(dades_passos), 
+                                nrow(dades_finals) - nrow(dades_passos),
+                                nrow(raw)) |> print()
+  
+  return(dades_finals)
+}
+```
+
+
+Dades finals de provincia
+
+```{r}
+dades_finals_prov <- pas_final_ajuntar(
+  dades_p_pas1 |> select(codi_expedient, provincia),
+  dades_p_pas2 |> select(codi_expedient, provincia),
+  dades_globals = raw,
+  id = codi_expedient
+)
+```
+
+
+Test provincies no trobades i expedients unics en els passos
+
+```{r}
+test[["Test 6: Provincies no trobades"]] <- dades_finals_prov |> 
+  filter(is.na(provincia)) |> 
+  select(codi_expedient, municipi, regió_policial)
+
+test[["Test 7: Expedients unics passos prov"]] <- bind_rows(
+  dades_p_pas1,
+  dades_p_pas2) |> 
+  count(codi_expedient) |> summarise(max = max(n)) |> 
+  pull() == 1
+```
+
+
+### Extra: Comparant els 2 mètodes:
+
+Pas 2 en totes les dades, per poder comparar mètode municipis vs RP (veure com funcionen independentment)
+
+```{r}
+# Join per RP, sempre que l'RP sigui unic
+join_RP_global <- raw |> 
+  # Elimina RP no unics i NAs en RP
+  filter(str_detect(regió_policial, "\\|", negate = TRUE)) |> 
+  left_join(connector_RP_Prov |> 
+              select(RP, regió_policial, provincia_max, extra_prov), 
+            by = join_by(regió_policial == regió_policial))
+
+# Faig un test per comparar efectivitat (nombre fila) dels mètodes al final
+test[["Test 5: Nombre de cols en mètode RP"]] <- nrow(join_RP_global |> filter(!is.na(provincia_max)))
+```
+
+
+Comprobant el mètode global amb RP: 
+
+```{r}
+# Visualitzant files sense coincidencies
+join_RP_global |> 
+  select(municipi, regió_policial, provincia_max, extra_prov) |> 
+  filter(is.na(provincia_max)) 
+
+# Detectant si hi ha  possibles RPs erronis (per extra prov)
+join_RP_global |> 
+  select(municipi, regió_policial, provincia_max, extra_prov) |>
+  group_by(extra_prov) |> 
+  count(extra_prov)
+
+# Per veure en un data.frame (header)
+join_RP_global |> 
+  select(municipi, regió_policial, provincia_max, extra_prov) |>
+  filter(purrr::map_dbl(extra_prov, length) > 0) |> 
+  as.data.frame() |> 
+  head()
+```
+
+Mètode municipis vs mètode RP:
+
+Es veuran les províncies que no coincideixen
+
+```{r}
+comparacio <- raw |> 
+  # base
+  select(codi_expedient, municipi, regió_policial) |> 
+  # municipi
+  left_join(join_un_municipi |> 
+              select(codi_expedient, municipi, regió_policial, provincia),
+            by = join_by(codi_expedient == codi_expedient)) |> 
+  left_join(join_RP_global |> 
+              select(codi_expedient, municipi, regió_policial, provincia_max, extra_prov),
+            by = join_by(codi_expedient == codi_expedient))
+
+
+comparacio |> 
+  filter(provincia != provincia_max) |>  as.data.frame() |> knitr::kable()
+```
+
+Sembla que per 2021 el mètode municipis és més efectiu
+
+
+## Recompte Comunicats Efectius
+
+Files que ja tenen recompte:
+
+```{r}
+dades_r_pas1 <- raw |> 
+  filter(!is.na(recompte_comunicats_efectius)) |> 
+  select(codi_expedient, recompte_comunicats_efectius)
+```
+
+Files sense recompte pero amb "Un dia o diversos" = UD
+
+```{r}
+# Files amb recompte
+dades_r_pas2 <- raw |> 
+  filter(is.na(recompte_comunicats_efectius)) |> 
+  filter(`un_dia_o_diversos?_(ud/md)` == "UD") |> 
+  mutate(recompte_comunicats_efectius = 1) |> 
+  select(codi_expedient, recompte_comunicats_efectius)
+```
+
+Veure si hi ha data celebració als restants:
+
+```{r}
+dades_r_pas3 <- raw |> 
+  anti_join(bind_rows(
+      dades_r_pas1,
+      dades_r_pas2),
+    by = join_by(codi_expedient == codi_expedient)
+  ) |>
+  filter(!is.na(data_de_celebració)) |> 
+  mutate(recompte_comunicats_efectius = 1) |> 
+  select(codi_expedient, recompte_comunicats_efectius)
+```
+
+
+Dades finals de recomptes
+
+```{r}
+dades_finals <- pas_final_ajuntar(dades_r_pas1, 
+                  dades_r_pas2,
+                  dades_r_pas3,
+                  dades_globals = dades_finals_prov |> 
+                    rename(recompte_comunicats_efectius_original = recompte_comunicats_efectius), 
+                  id = codi_expedient)
+```
+
+
+Test recomptes amb expedients únics en els passos
+
+```{r}
+test[["Test 9: Recomptes no trobats"]] <- dades_finals |> 
+  filter(is.na(recompte_comunicats_efectius)) |> 
+  select(codi_expedient, `dates_(cas_de_més_d'un_dia)`, regió_policial)
+
+
+test[["Test 8: Expedients unics passos recompte"]] <- bind_rows(
+  dades_r_pas1,
+  dades_r_pas2,
+  dades_r_pas3) |> 
+  count(codi_expedient) |> summarise(max = max(n)) |> 
+  pull() == 1
+```
+
+
+## Guardant dades
+
+```{r}
+write.xlsx(dades_finals, 
+           sprintf("%s/dades_raw/%s amb dades afegides.xlsx", getwd(), any_fitxer), 
+           colNames = TRUE)
+```
+
+
+
+
+# Tests
+
+```{r}
+test[order(names(test))]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

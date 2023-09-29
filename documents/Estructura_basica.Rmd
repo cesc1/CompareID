@@ -1,0 +1,68 @@
+---
+title: 'Title'
+author: 'Your Name'
+output:
+  rmdformats::readthedown:
+    number_sections: yes
+    toc_depth: 3
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!-- 1 ======================================================= -->
+
+
+# Backend
+
+## Carregar dades
+
+### Path {-}
+
+### Carrega {-}
+
+### Mini visualització {-}
+
+
+## Preprocessament
+
+### Seleccionar id {-}
+
+### Columna de control {-}
+
+Afegir columna de control seqüencia (per comprovar si el merge s'ha fet correctament, i enganxar taules al treure NAs).
+
+### Tipus relació {-}
+
+Veure si la relació és | 1-n | n-n | n-1 |, comprovar que sigui possible el join que es vol.
+
+### Aplicar preprocessament bàsic {-}
+
+- Treure NAs (o veure si funciona fer el merge amb NAs)
+- To_lower
+- Distinct (si no s'ha aplicat abans)
+
+### Preprocessament avançat {-}
+
+- Regex (str_remove)
+- Manera de guardar els passos, o el codi utilitzat? Potser no fa falta, ja que el regex és fàcil aplicar-lo.
+
+### Fer joint per comprovar resultats {-}
+
+- Fer Join
+- Buscar individus que no s'han filtrat correctament (a partir de la [Columna de control] creada).
+
+  
+
+
+
+
+
+
+
+
+# Shiny App
