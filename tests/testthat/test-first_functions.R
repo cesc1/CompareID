@@ -1,3 +1,6 @@
+
+# Test load_data: Càrrega de dades
+
 test_that("load_data: used with my data", {
   data_load <- load_data(
     test_path("test_data", "Dades prova.xlsx")
