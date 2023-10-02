@@ -7,3 +7,4 @@
 .quarto
 data/
 *.html
+inst/doc
