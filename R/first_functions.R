@@ -17,6 +17,7 @@
 #'               "/Annual-enterprise-survey-2021-financial-year-provisional",
 #'               "/Download-data/annual-enterprise-survey-2021-financial-year-provisional-csv.csv")
 #' load_data(path)
+#'
 load_data <- function(path,
                       format,
                       setclass = getOption("rio.import.class", "data.frame"),
