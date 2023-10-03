@@ -1,12 +1,10 @@
 image: rocker/tidyverse
-stages: 
+stages:
     - test
 test-job:
     stage: test
     script:
-        # run R CMD check on the package (this path)
+        - R -e 'devtools::load_all()'
         #- R CMD check ./ --no-manual
-        # run the devtools test
         - R -e 'devtools::test()'
-        # install the package
         #- R -e 'devtools::install()'
