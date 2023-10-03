@@ -8,7 +8,9 @@ Description: Sometimes there is a need to apply a join, but the id columns
     situation.
 License: MIT + file LICENSE
 Imports: 
-    rio
+    dplyr,
+    rio,
+    tidyr
 Suggests: 
     knitr,
     rmarkdown,

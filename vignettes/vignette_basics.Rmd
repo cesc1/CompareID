@@ -3,8 +3,10 @@ title: "vignette_basics"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{vignette_basics}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -14,6 +16,23 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+# Load package
+
 ```{r setup}
 library(compareid)
 ```
+
+
+# Load data
+
+```{r}
+raw1 <- load_data(paste0(usethis::proj_path(), "/data/Dades juntes.xlsx"), which = "Dades_Examen1")
+raw2 <- load_data(paste0(usethis::proj_path(), "/data/Dades juntes.xlsx"), which = "Dades_Examen2") 
+
+id1 <- dplyr::pull(raw1, "id")
+id2 <- dplyr::pull(raw2, "id")
+```
+
+
+
