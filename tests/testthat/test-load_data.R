@@ -2,9 +2,7 @@
 # Test load_data: Càrrega de dades
 
 test_that("load_data: used with my data", {
-  data_load <- load_data(
-    test_path("test_data", "Dades prova.xlsx")
-  )
+  path = test_path("test_data", "Dades prova.xlsx")
 
   data_check <- data.frame(
     municipi = c("Abrera", "Aguilar", "Alélla", "Alpans",
@@ -13,5 +11,6 @@ test_that("load_data: used with my data", {
     info = c(1:9)
   )
 
-  expect_equal(data_load, data_check)
+  expect_equal(load_data(path), data_check)
+  expect_equal(load_data(path, which = "Hoja1"), data_check)
 })
