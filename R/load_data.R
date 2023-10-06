@@ -19,7 +19,7 @@
 #' load_data(path)
 load_data <- function(path,
                       format,
-                      setclass = getOption("rio.import.class", "data.frame"),
+                      setclass = "tibble",
                       which,
                       ...) {
   rio::import(path, format, setclass, which, ...)
