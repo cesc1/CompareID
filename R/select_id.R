@@ -6,7 +6,7 @@
 #' @param table2 A data.frame
 #' @param id The column id to select. Must be a vector of length 1 or 2
 #'
-#' @return
+#' @return A list with the 2 columns, in vector format
 #' @export
 #'
 #' @examples
