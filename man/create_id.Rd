@@ -4,7 +4,7 @@
 \alias{create_id}
 \title{Create an id for both tables, pasting columns together}
 \usage{
-create_id(tables, col_pos, sep = " ")
+create_id(table, col_pos, sep = " ")
 }
 \arguments{
 \item{sep}{}

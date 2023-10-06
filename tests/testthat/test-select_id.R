@@ -23,3 +23,11 @@ test_that("length_id", {
   expect_equal(length_id(c(11L, 12L)), 2)
   expect_error(length_id(c(11L, 12L, 13L)), "length")
 })
+
+
+test_that("select_id data rows", {
+  data <- select_id(table1, table2, "municipi")
+
+  expect_equal(nrow(data$table1), nrow(table1))
+  expect_equal(nrow(data$table2), nrow(table2))
+})

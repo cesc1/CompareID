@@ -11,6 +11,6 @@
 #' @export
 #'
 #' @examples
-create_id <- function(tables, col_pos, sep = " ") {
+create_id <- function(table, col_pos, sep = " ") {
 
 }

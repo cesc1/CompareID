@@ -11,15 +11,13 @@
 #'
 #' @examples
 select_id <- function(table1, table2, id) {
-  len <- length_id(id) # will stop if not 1 or 2
-
-  if(len == 1) {
+  if(length_id(id) == 1) { # will stop if not 1 or 2
     id[2] <- id
   }
 
   result <- list(
-    table1 = table1[id[1]],
-    table2 = table2[id[2]]
+    table1 = dplyr::tibble("id" = table1[id[1]]),
+    table2 = dplyr::tibble("id" = table2[id[2]])
   )
 
   return(result)
