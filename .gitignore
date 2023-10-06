@@ -6,5 +6,6 @@
 .DS_Store
 .quarto
 data/
+documents/
 *.html
 inst/doc
