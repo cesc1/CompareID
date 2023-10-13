@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples
-select_id <- function(table1, table2, id, table_names = NULL) {
+select_id <- function(table1, table2, id = "id", table_names = NULL) {
   # Check length id
   if(length_id(id) == 1) { # will stop if not 1 or 2
     id[2] <- id
