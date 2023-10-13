@@ -24,7 +24,12 @@ select_id <- function(table1, table2, id = "id", table_names = NULL) {
     table2 = dplyr::select(table2, all_of(id[2]))
   )
 
-  # Rename feature
+  # Rename
+  ## column ids
+  colnames(result$table1) <- "id"
+  colnames(result$table2) <- "id"
+
+  ## table names
   if(!is.null(table_names)) {
     names(result) <- table_names
   }
