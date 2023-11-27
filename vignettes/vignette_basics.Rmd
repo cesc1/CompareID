@@ -24,14 +24,46 @@ library(compareid)
 ```
 
 
-# Load data
+# Data
+
+We're going to play with the package data, `table1` and `table2`.
+
+```{r results = 'asis', echo = F}
+knitr::kable(table1)
+```
+
+```{r results = 'asis', echo = F}
+knitr::kable(table2)
+```
+
+
+
+# Data preparation
+
+## select_id
+
+We have to select the column that we want to work with:
 
 ```{r}
-raw1 <- load_data(paste0(usethis::proj_path(), "/data/Dades juntes.xlsx"), which = "Dades_Examen1")
-raw2 <- load_data(paste0(usethis::proj_path(), "/data/Dades juntes.xlsx"), which = "Dades_Examen2") 
+ids <- CompareID$new(table1, table2, "municipi")
+ids
+```
 
-id1 <- dplyr::pull(raw1, "id")
-id2 <- dplyr::pull(raw2, "id")
+It returns a list with two tibbles, each with the selected column.
+
+
+# Data exploration
+
+## Tipus relació
+
+```{r eval = F}
+## Afegir recompte
+
+join <- ids$id1["id"] |> 
+  dplyr::inner_join(ids$id2 |> 
+                     dplyr::distinct(.keep_all = TRUE), by = "id")
+join
+
 ```
 
 

@@ -1,0 +1,69 @@
+---
+title: "vignette_complex"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette_complex}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Load package
+
+```{r setup}
+library(compareid)
+```
+
+
+# Data
+
+## Load data
+
+We're going to play with the package data, `table1` and `table2`.
+
+```{r}
+data_path = file.path(usethis::proj_path(), "data-raw", "altres")
+
+datac1 <- load_data(file.path(data_path, "Dades_municipals_base.csv"))
+datac2 <- load_data(file.path(data_path, "Dades_municipals_idscat.csv"))
+```
+
+
+## Data visualization
+
+```{r}
+datac1
+datac2
+```
+
+
+# Data preparation
+
+## select_id
+
+We have to select the column that we want to work with:
+
+```{r}
+ids <- select_id(datac1, datac2, "x") # elegir columna apropiada
+ids
+```
+
+It results in an extraction of the columns we want to work on.
+
+
+## creating a unique id
+
+If both the tables have multiple columns, we can create an id based on this columns
+
+```{r}
+
+```
