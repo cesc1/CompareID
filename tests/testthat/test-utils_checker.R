@@ -51,6 +51,9 @@ test_that("Check_variable types", {
   expect_true(Check_variable$new("test", type = "string", len = 1)$type)
   expect_true(Check_variable$new("test", type = "factor", len = 1)$type)
 
+  # logical
+  expect_true(Check_variable$new(TRUE, type = "logical", len = 1)$type)
+  expect_true(Check_variable$new(FALSE, type = "boolean", len = 1)$type)
 
   # data.frame
   expect_true(Check_variable$new(data.frame(x=1), type = "data.frame", len = 1)$type)

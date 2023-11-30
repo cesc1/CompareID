@@ -2,20 +2,22 @@
 % Please edit documentation in R/utils.R
 \name{is_duplicate}
 \alias{is_duplicate}
-\title{Check if a tibble has duplicates}
+\title{Check if a "CompareID" object has duplicates}
 \usage{
-is_duplicate(taula)
+is_duplicate(objecte, view = FALSE)
 }
 \arguments{
-\item{taula}{Tibble with 1 column, or multiple columns with one named "n"}
+\item{objecte}{CompareID}
+
+\item{view}{Boolean. If we want to view witch values are duplicates}
 }
 \value{
-Boolean: T if duplicates, F if unique.
+Boolean vector. Tells if id1 or id2 has duplicates
 }
 \description{
-Check if a tibble has duplicates
+Check if a "CompareID" object has duplicates
 }
 \examples{
-is_duplicate(table2, "municipi")
+is_duplicate(CompareID$new(table1, table2, "municipi"))
 
 }
