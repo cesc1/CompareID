@@ -3,6 +3,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom dplyr select all_of left_join right_join full_join inner_join filter
 
 CompareID <- R6::R6Class(
   "CompareID",
@@ -62,13 +63,13 @@ CompareID <- R6::R6Class(
                              list(c(id))) |> unlist()
 
         # id1, id2
-      self$id1 <- dplyr::select(dades1, dplyr::all_of(self$id_name[1])) |>
-        dplyr::mutate(checker = TRUE)
-      self$id2 <- dplyr::select(dades2, dplyr::all_of(self$id_name[2])) |>
-        dplyr::mutate(checker = TRUE)
+      self$id1 <- dplyr::select(dades1, dplyr::all_of(self$id_name[1]))
+      self$id2 <- dplyr::select(dades2, dplyr::all_of(self$id_name[2]))
 
-      colnames(self$id1) <- c("id", "checker") # Rename column ids
-      colnames(self$id2) <- c("id", "checker")
+      colnames(self$id1) <- "id" # Rename column ids
+      colnames(self$id2) <- "id"
+      self$id1 <- self$id1 |> mutate(original = id)
+      self$id2 <- self$id2 |> mutate(original = id)
 
         # join_type
       self$join_type <- join_type
@@ -115,19 +116,19 @@ CompareID <- R6::R6Class(
     #' CompareID$new(table1, table2, "municipi")$join()$join_miss
     join_miss = function() {
       result <- self$join_result |>
-        dplyr::filter(is.na(checker))
+        dplyr::filter(is.na(original))
 
       return(result)
     },
 
     #' @description
-    #' Return the missing matches of the join
+    #' Return the matches of the join
     #' @return data.frame
     #' @examples
     #' CompareID$new(table1, table2, "municipi")$join()$join_miss
     join_match = function() {
       result <- self$join_result |>
-        dplyr::filter(!is.na(checker))
+        dplyr::filter(!is.na(original))
 
       return(result)
     }

@@ -1,6 +1,7 @@
 
 #' Check if a "CompareID" object has duplicates
 #'
+#' @importFrom dplyr mutate filter count
 #' @param objecte CompareID
 #' @param view Boolean. If we want to view witch values are duplicates
 #'

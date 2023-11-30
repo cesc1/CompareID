@@ -6,6 +6,7 @@ test_that("Constructor", {
   expect_error(Step$new(type = "hola"))
 })
 
+
 test_that("step replace", {
   taula <- tibble(id = c("saaba"))
   expect_equal(Step$new(type = "replace", pattern = "a", position = "all")$.step(taula),
@@ -22,11 +23,42 @@ test_that("step replace", {
                tibble(id = "saaba"))
   expect_equal(Step$new(type = "replace", pattern = "a", position = "all", replace = "x")$.step(taula),
                tibble(id = "sxxbx"))
+  expect_equal(Step$new(type = "replace", pattern = c("a", "s"), position = "all", replace = "")$.step(taula),
+               tibble(id = "b"))
 
 })
+
 
 test_that("step to_lower", {
   taula <- tibble(id = c("AAAAbbbbAAAAbbbAAAA", "FRANKY"))
   expect_equal(Step$new(type = "lower")$.step(taula),
                taula |> mutate(id = tolower(id)))
+})
+
+
+test_that("step manual", {
+  taula <- tibble(id = c(
+    "hola",
+    "sabe",
+    "que pasa"
+  ))
+  taula_res <- tibble(id = c(
+    "hola",
+    "sape",
+    "adeu"
+  ))
+  llista_equival <- list(
+    "sabe" = "sape",
+    "que pasa" = "adeu"
+  )
+  vector_equival <- c(
+    "sabe" = "sape",
+    "que pasa" = "adeu"
+  )
+
+  expect_equal(Step$new(type = "manual", match = llista_equival)$.step(taula),
+               taula_res)
+  expect_equal(Step$new(type = "manual", match = vector_equival)$.step(taula),
+               taula_res)
+  expect_error(Step$new(type = "manual", match = c(1:2))$.step(taula))
 })

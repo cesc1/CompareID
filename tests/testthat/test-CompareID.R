@@ -38,7 +38,7 @@ test_that("join_miss", {
   checker <- dplyr::left_join(exemple$id1["id"],
                               exemple$id2,
                               "id") |>
-    filter(is.na(checker))
+    filter(is.na(original))
   expect_equal(exemple$join()$join_miss,
                checker)
 })
@@ -48,7 +48,7 @@ test_that("join_match", {
   checker <- dplyr::left_join(exemple$id1["id"],
                               exemple$id2,
                               "id") |>
-    filter(!is.na(checker))
+    filter(!is.na(original))
   expect_equal(exemple$join()$join_match,
                checker)
 })

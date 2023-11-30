@@ -14,7 +14,7 @@ Step <- R6::R6Class(
     # FIELDS
 
     #' @field type char. The type of step to apply.
-    #' Can be: c("replace", lower)
+    #' Can be: c("replace", "lower", "manual")
     #'
     .type = NULL,
     #' @field .step function. A step to aply to CompareID
@@ -29,7 +29,7 @@ Step <- R6::R6Class(
     #' @param type string. Select the type of step/function to apply.
     #' @param ... Other arguments of the function that will be applied.
     #' - replace: pattern, position
-    #' -
+    #' - manual: match
     #' @return A Step object.
     #' @examples
     #' Step$new(type = "replace", pattern = "a")
@@ -60,6 +60,11 @@ Step <- R6::R6Class(
     #'
     .replace = NULL,
 
+    #' @field .match tibble. Columns: search and replace.
+    #' It uses exact matches. To create, list("search" = "replace")
+    #'
+    .match = NULL,
+
 
     # METHODS
 
@@ -70,14 +75,17 @@ Step <- R6::R6Class(
       result <- switch(self$.type,
         "replace" = private$step_replace_pat(...),
         "lower"  = private$step_to_lower(),
+        "manual" = private$step_manual(...),
         stop("type not found.")
       )
       return(result)
     },
 
     #' @description
-    #' If type = "replace", will remove or replace a pattern from a dataset.
-    #' @param pattern string. Regex to apply
+    #' If type = "replace", will create a step that removes or replaces a
+    #' pattern from a dataset.
+    #' @param pattern string. Regex to apply. If length > 1, it paste it together
+    #' with "|"
     #' @param position  string. Where to apply the pattern.
     #' Can be: c("all", "one", "start", "end")
     #' @param replace string. The replacement of the pattern
@@ -87,11 +95,15 @@ Step <- R6::R6Class(
                                 position = c("all", "one", "start", "end"),
                                 replace = "") {
       position = position[1]
-      stopifnot(checkvar(pattern, "character"))
+      stopifnot(checkvar(pattern, "character", len = 1, len_operator = ">="))
       stopifnot(checkvar(position, "character"))
       stopifnot(checkvar(replace, "character"))
-
       stopifnot(position %in% c("all", "one", "start", "end"))
+
+      # Preprocessing pattern
+      pattern <- ifelse(length(pattern) > 1,
+             paste(pattern, collapse = "|"),
+             pattern)
 
       # Add fields
       private$.position = position
@@ -119,7 +131,8 @@ Step <- R6::R6Class(
 
 
     #' @description
-    #' If type = "lower, will transform the string to lower from a dataset.
+    #' If type = "lower", will create a step that transform the string
+    #' to lower from a dataset.
     #' @return function
     #'
     step_to_lower = function() {
@@ -127,7 +140,39 @@ Step <- R6::R6Class(
         dplyr::mutate(dades, id = tolower(id))
       }
       return(result)
-    }
+    },
 
+
+    #' @description
+    #' If type = "manual", will create a step to replace an exact
+    #' match from a dataset.
+    #' @param match list or char named vector. Example: c(search = "replace")
+    #' @return function
+    #'
+    step_manual = function(match) {
+      # Check match
+      stopifnot(checkvar(match, type = "list") ||
+                checkvar(match, type = "char"))
+      stopifnot(length(names(match)) == length(match))
+
+      # Preprocessing match
+      private$.match <- tibble(
+        search = names(match),
+        replace = unlist(match)
+      )
+      # Result
+      result <- function(dades) {
+        idx_match <- match(private$.match$search,
+                           dades$id)
+        stopifnot(!any(is.na(idx_match))) # if NA stop
+
+        dades |>
+          dplyr::mutate(
+            id = replace(id,
+                         idx_match,
+                         private$.match$replace))
+      }
+      return(result)
+    }
   )
 )

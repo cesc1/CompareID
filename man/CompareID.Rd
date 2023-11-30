@@ -13,12 +13,21 @@
 A CompareID object
 
 Updates self$join_result, and returns invisible(self).
+
+data.frame
+
+data.frame
 }
 \description{
 Create object of the class.
 
 Do a join with id1 and id2. The type of join is chose by join_type.
+Can add more parameters (see ?dplyr::left_join)
 TODO: Add the preprocessing step.
+
+Return the missing matches of the join
+
+Return the matches of the join
 }
 \section{Fields}{
 
@@ -35,5 +44,7 @@ a vector of length 1 or 2, depending if the name is the same or not.}
 
 \examples{
 CompareID$new(table1, table2, "municipi")
-CompareID$new(table1, table2, "municipi")
+CompareID$new(table1, table2, "municipi")$join()$join_result
+CompareID$new(table1, table2, "municipi")$join()$join_miss
+CompareID$new(table1, table2, "municipi")$join()$join_miss
 }

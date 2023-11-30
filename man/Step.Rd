@@ -5,22 +5,30 @@
 \alias{Step}
 \title{R6 Class Step, will help adding a step on the preprocessing process}
 \arguments{
-\item{type}{string. Select the type of step/function to apply.
-Can be: c("remove")}
+\item{type}{string. Select the type of step/function to apply.}
 
 \item{...}{Other arguments of the function that will be applied.
 \itemize{
-\item remove: pattern, position
-\item 
+\item replace: pattern, position
+\item manual: match
 }}
 
-\item{pattern}{string. Regex to apply}
+\item{pattern}{string. Regex to apply. If length > 1, it paste it together
+with "|"}
 
 \item{position}{string. Where to apply the pattern.
 Can be: c("all", "one", "start", "end")}
+
+\item{replace}{string. The replacement of the pattern}
+
+\item{match}{list or char named vector. Example: c(search = "replace")}
 }
 \value{
 A Step object.
+
+function
+
+function
 
 function
 }
@@ -29,13 +37,20 @@ Create object of the class.
 
 Will help choosing the function step to apply (equivalence table from self$.type)
 
-If type = remove, will remove a pattern from a dataset dataset.
+If type = "replace", will create a step that removes or replaces a
+pattern from a dataset.
+
+If type = "lower", will create a step that transform the string
+to lower from a dataset.
+
+If type = "manual", will create a step to replace an exact
+match from a dataset.
 }
 \section{Fields}{
 
 \describe{
 \item{\code{type}}{char. The type of step to apply.
-Can be: c("remove")}
+Can be: c("replace", "lower", "manual")}
 
 \item{\code{.step}}{function. A step to aply to CompareID}
 
@@ -43,8 +58,14 @@ Can be: c("remove")}
 
 \item{\code{.position}}{char. The position to apply the pattern.
 Can be: c("all", "one", "start", "end")}
+
+\item{\code{.replace}}{char. The replacement for the pattern found.}
+
+\item{\code{.match}}{tibble. Columns: search and replace.
+It uses exact matches. To create, list("search" = "replace")}
 }}
 
 \examples{
-Step$new(type = "remove", pattern = "a")
+Step$new(type = "replace", pattern = "a")
+
 }
