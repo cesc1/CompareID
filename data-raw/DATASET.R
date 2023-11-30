@@ -14,6 +14,8 @@ check_equivalences <- dplyr::tribble(
   "fact",       function(object) {is.character(object) || is.factor(object)},
   "num",        function(object) {is.numeric(object) || is.integer(object)},
   "int",        function(object) {is.numeric(object) || is.integer(object)},
+  "bool",       function(object) {is.logical(object)},
+  "logical",    function(object) {is.logical(object)},
   "dataframe",  function(object) {is.data.frame(object) || tibble::is_tibble(object)},
   "data.frame", function(object) {is.data.frame(object) || tibble::is_tibble(object)},
   "df",         function(object) {is.data.frame(object) || tibble::is_tibble(object)},
