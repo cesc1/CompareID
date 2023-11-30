@@ -1,33 +1,35 @@
 
-#' Check if a tibble has duplicates
+#' Check if a "CompareID" object has duplicates
 #'
-#' @param taula Tibble with 1 column, or multiple columns with one named "n"
+#' @param objecte CompareID
+#' @param view Boolean. If we want to view witch values are duplicates
 #'
-#' @return Boolean: T if duplicates, F if unique.
+#' @return Boolean vector. Tells if id1 or id2 has duplicates
 #' @export
 #'
-#' @examples is_duplicate(table2, "municipi")
+#' @examples is_duplicate(CompareID$new(table1, table2, "municipi"))
 #'
-is_duplicate <- function(taula) {
+is_duplicate <- function(objecte, view = FALSE) {
   # Type check
-  stopifnot(checkvar(taula, "tibble"))
+  stopifnot(inherits(objecte, "CompareID"))
 
-    # Id table
-  if (ncol(taula) == 1) {
-    result <- taula[[1]] |>
-      duplicated() |>
-      any()
-    return(result)
+  dup1 <- objecte$id1 |>
+    dplyr::count(id) |>
+    dplyr::filter(n > 1)
+  dup2 <- objecte$id2 |>
+    dplyr::count(id) |>
+    dplyr::filter(n > 1)
 
-  } # Counts table
-  else if ("n" %in% names(taula)) {
-    result <- taula |>
-      dplyr::filter(n > 1) |>
-      nrow() > 0
-    return(result)
+  result <- c("id1" = nrow(dup1) > 0,
+              "id2" = nrow(dup2) > 0)
+
+  if (view) {
+    return(
+      list(id1 = dup1,
+           id2 = dup2)[result])
   }
 
-  stop("Table format not correct")
+  return(result)
 }
 
 
