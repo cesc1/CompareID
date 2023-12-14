@@ -34,15 +34,16 @@ Step <- R6::R6Class(
     #' @examples
     #' Step$new(type = "replace", pattern = "a")
     #'
-    initialize = function(type, ...) {
-
-      # Add type type
+    initialize = function(type = list(NULL, "replace", "lower", "manual"), ...) {
+      # Add type
+      type = type[[1]]
       stopifnot(checkvar(type, "character"))
       self$.type <- type
 
       # Add step
       self$.step <- private$choose_step_type(...)
     }
+
   ),
 
   private = list(
@@ -173,6 +174,29 @@ Step <- R6::R6Class(
                          private$.match$replace))
       }
       return(result)
+    }
+  ),
+
+  active = list(
+
+    #' @description
+    #' Info: Show basic info
+    #' @return A vector with the info
+    #'
+    info = function() {
+      taula <- dplyr::tibble(type = character(),
+                             pattern = character(),
+                             replace = character(),
+                             position = character(),
+                             match = list())
+      taula |>
+        dplyr::add_row(
+          type = self$.type,
+          pattern = private$.pattern,
+          replace = private$.replace,
+          position = private$.position,
+          match = list(private$.match)
+        )
     }
   )
 )

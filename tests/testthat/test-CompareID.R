@@ -5,14 +5,15 @@
 test_that("constructor", {
   # fields
   exemple <- CompareID$new(table1, table2, "municipi")
-  expect_identical(table1$municipi, exemple$id1$id)
-  expect_identical(table2$municipi, exemple$id2$id)
-  expect_identical("left", exemple$join_type)
+  expect_identical(exemple$id1$id, table1$municipi)
+  expect_identical(exemple$id2$id, table2$municipi)
+  expect_identical(exemple$join_type, "left")
 
   # field id_name
-  expect_identical(rep("municipi", 2), exemple$id_name)
+  expect_identical(exemple$id_name, rep("municipi", 2))
   id_name_test = c("municipi", "municipi")
-  expect_identical(id_name_test, CompareID$new(table1, table2, id_name_test)$id_name)
+  expect_identical(CompareID$new(table1, table2, id_name_test)$id_name,
+                   id_name_test)
 
   # field error
   expect_error(CompareID$new(1, table2, "municipi"))

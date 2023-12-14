@@ -8,11 +8,19 @@
 \item{dades1}{data.frame. Taula en la cual volem extreure el primer identificador}
 
 \item{dades2}{data.frame. Taula en la cual volem extreure el segon identificador}
+
+\item{which}{which table add the step (all, id1 or id2)}
 }
 \value{
 A CompareID object
 
 Updates self$join_result, and returns invisible(self).
+
+Updates self$id1 and self$id2 with the steps applied
+
+Updates self$id1 and self$id2 with the originals
+
+Updates self$steps_id1 and self$steps_id2
 
 data.frame
 
@@ -23,7 +31,12 @@ Create object of the class.
 
 Do a join with id1 and id2. The type of join is chose by join_type.
 Can add more parameters (see ?dplyr::left_join)
-TODO: Add the preprocessing step.
+
+Apply the preprocessing steps stored in steps_ids, to its respective ids.
+
+Reset the preprocessing steps applied to the data. Used at the start of join.
+
+Add a step to id1, id2 or both
 
 Return the missing matches of the join
 
@@ -39,7 +52,13 @@ Return the matches of the join
 \item{\code{id_name}}{Character. The name of the column identifiers. Can be
 a vector of length 1 or 2, depending if the name is the same or not.}
 
-\item{\code{join-type}}{String. Type of join to use (left, right, full, inner)}
+\item{\code{join_type}}{String. Type of join to use (left, right, full, inner)}
+
+\item{\code{join_result}}{Tibble. The result of the join}
+
+\item{\code{steps_id1}}{Step_manager. Steps of id1}
+
+\item{\code{steps_id2}}{Step_manager. Steps of id2}
 }}
 
 \examples{

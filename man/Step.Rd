@@ -31,6 +31,8 @@ function
 function
 
 function
+
+A vector with the info
 }
 \description{
 Create object of the class.
@@ -45,6 +47,8 @@ to lower from a dataset.
 
 If type = "manual", will create a step to replace an exact
 match from a dataset.
+
+Info: Show basic info
 }
 \section{Fields}{
 

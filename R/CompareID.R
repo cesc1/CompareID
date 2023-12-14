@@ -22,10 +22,18 @@ CompareID <- R6::R6Class(
     #' a vector of length 1 or 2, depending if the name is the same or not.
     id_name = NULL,
 
-    #' @field join-type String. Type of join to use (left, right, full, inner)
+    #' @field join_type String. Type of join to use (left, right, full, inner)
     join_type = NULL,
 
+    #' @field join_result Tibble. The result of the join
     join_result = NULL,
+
+    #' @field steps_id1 Step_manager. Steps of id1
+    steps_id1 = NULL,
+
+    #' @field steps_id2 Step_manager. Steps of id2
+    steps_id2 = NULL,
+
 
     # CONSTRUCTOR
 
@@ -74,6 +82,10 @@ CompareID <- R6::R6Class(
         # join_type
       self$join_type <- join_type
 
+        # steps_id
+      self$steps_id1 <- Step_manager$new()
+      self$steps_id2 <- Step_manager$new()
+
       return(invisible(self))
     },
 
@@ -82,11 +94,17 @@ CompareID <- R6::R6Class(
     #' @description
     #' Do a join with id1 and id2. The type of join is chose by join_type.
     #' Can add more parameters (see ?dplyr::left_join)
-    #' TODO: Add the preprocessing step.
     #' @return Updates self$join_result, and returns invisible(self).
     #' @examples
     #' CompareID$new(table1, table2, "municipi")$join()$join_result
     join = function(...) {
+
+      # Reset preprocessing steps
+      self$reset_steps()
+
+      # Apply preprocessing steps
+      self$do_steps()
+
       do_join = switch(self$join_type,
         "left" = dplyr::left_join,
         "right" = dplyr::right_join,
@@ -96,14 +114,57 @@ CompareID <- R6::R6Class(
       )
 
       self$join_result <- do_join(
-        self$id1["id"],
-        self$id2,
+        self$id1["id"], # only id column
+        self$id2,       # id + original, to check misses/matches
         by = "id",
         ...
       )
 
       return(invisible(self))
+    },
+
+    #' @description
+    #' Apply the preprocessing steps stored in steps_ids, to its respective ids.
+    #' @return Updates self$id1 and self$id2 with the steps applied
+    #'
+    do_steps = function() {
+
+      self$id1 <- self$id1 |>
+        self$steps_id1$do_steps()
+
+      self$id2 <- self$id2 |>
+        self$steps_id2$do_steps()
+
+      return(invisible(self))
+    },
+
+
+    #' @description
+    #' Reset the preprocessing steps applied to the data. Used at the start of join.
+    #' @return Updates self$id1 and self$id2 with the originals
+    #'
+    reset_steps = function() {
+      self$id1 <- self$id1 |>
+        dplyr::mutate(id = original)
+
+      self$id2 <- self$id2 |>
+        dplyr::mutate(id = original)
+
+      return(invisible(self))
+    },
+
+
+    #' @description
+    #' Add a step to id1, id2 or both
+    #'
+    #' @param which which table add the step (all, id1 or id2)
+    #'
+    #' @return Updates self$steps_id1 and self$steps_id2
+    #'
+    add_step = function(which = c("all", "id1", "id2")) {
+
     }
+
 
   ),
 
@@ -132,7 +193,5 @@ CompareID <- R6::R6Class(
 
       return(result)
     }
-
   )
-
 )

@@ -4,6 +4,7 @@
 test_that("Constructor", {
   expect_no_error(Step$new(type = "replace", pattern = "asdf"))
   expect_error(Step$new(type = "hola"))
+  expect_error(Step$new())
 })
 
 
