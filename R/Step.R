@@ -42,6 +42,17 @@ Step <- R6::R6Class(
 
       # Add step
       self$.step <- private$choose_step_type(...)
+    },
+
+
+    #' @description
+    #' Print the class
+    #' @return Void
+    #'
+    print = function() {
+      cat("Class: Step\n")
+      cat("-----------\n")
+      print(self$info)
     }
 
   ),
@@ -175,6 +186,7 @@ Step <- R6::R6Class(
       }
       return(result)
     }
+
   ),
 
   active = list(

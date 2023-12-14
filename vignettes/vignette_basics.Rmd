@@ -42,29 +42,25 @@ knitr::kable(table2)
 
 ## select_id
 
-We have to select the column that we want to work with:
+We have to select the column that we want to work with. 
+The default join type is left.
 
 ```{r}
 ids <- CompareID$new(table1, table2, "municipi")
+
+print(ids, show_fields = TRUE)
+```
+
+# Matching the data
+
+If we print the object right away, we can see the miss matches.
+
+This shows the fields from the first table, that where not found at the second table.
+
+```{r}
 ids
 ```
 
-It returns a list with two tibbles, each with the selected column.
-
-
-# Data exploration
-
-## Tipus relació
-
-```{r eval = F}
-## Afegir recompte
-
-join <- ids$id1["id"] |> 
-  dplyr::inner_join(ids$id2 |> 
-                     dplyr::distinct(.keep_all = TRUE), by = "id")
-join
-
-```
 
 
 

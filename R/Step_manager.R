@@ -93,6 +93,17 @@ Step_manager <- R6::R6Class(
           step$.step()
       }
       return(dades)
+    },
+
+
+    #' @description
+    #' Print the info method
+    #' @param dades tibble. It needs a column with name "id".
+
+    print = function() {
+      cat("Class: Step_manager\n")
+      cat("-------------------\n")
+      print(self$info)
     }
 
   ),

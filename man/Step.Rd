@@ -26,6 +26,8 @@ Can be: c("all", "one", "start", "end")}
 \value{
 A Step object.
 
+Void
+
 function
 
 function
@@ -36,6 +38,8 @@ A vector with the info
 }
 \description{
 Create object of the class.
+
+Print the class
 
 Will help choosing the function step to apply (equivalence table from self$.type)
 

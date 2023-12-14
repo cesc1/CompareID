@@ -9,7 +9,25 @@
 
 \item{dades2}{data.frame. Taula en la cual volem extreure el segon identificador}
 
-\item{which}{which table add the step (all, id1 or id2)}
+\item{type}{string. Select the type of step/function to apply.}
+
+\item{...}{Other arguments of the function that will be applied.
+\itemize{
+\item replace: pattern, position
+\item manual: match
+}}
+
+\item{which}{which id add the step (all, id1 or id2)}
+
+\item{show_fields}{bool. If we want to show all the fields of the class.}
+
+\item{show_steps}{bool. If we want to show the steps applied at the moment.}
+
+\item{show_result}{bool. If we want to show the result}
+
+\item{show_misses}{bool. If we want to show the miss matches of the result.}
+
+\item{show_matches}{bool. If we want to show the matches of the result.}
 }
 \value{
 A CompareID object
@@ -21,6 +39,8 @@ Updates self$id1 and self$id2 with the steps applied
 Updates self$id1 and self$id2 with the originals
 
 Updates self$steps_id1 and self$steps_id2
+
+Void
 
 data.frame
 
@@ -37,6 +57,8 @@ Apply the preprocessing steps stored in steps_ids, to its respective ids.
 Reset the preprocessing steps applied to the data. Used at the start of join.
 
 Add a step to id1, id2 or both
+
+Print some personalized info in the class
 
 Return the missing matches of the join
 

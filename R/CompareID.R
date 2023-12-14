@@ -71,8 +71,10 @@ CompareID <- R6::R6Class(
                              list(c(id))) |> unlist()
 
         # id1, id2
-      self$id1 <- dplyr::select(dades1, dplyr::all_of(self$id_name[1]))
-      self$id2 <- dplyr::select(dades2, dplyr::all_of(self$id_name[2]))
+      self$id1 <- dplyr::select(dades1, dplyr::all_of(self$id_name[1])) |>
+        dplyr::tibble()
+      self$id2 <- dplyr::select(dades2, dplyr::all_of(self$id_name[2])) |>
+        dplyr::tibble()
 
       colnames(self$id1) <- "id" # Rename column ids
       colnames(self$id2) <- "id"
@@ -105,7 +107,8 @@ CompareID <- R6::R6Class(
       # Apply preprocessing steps
       self$do_steps()
 
-      do_join = switch(self$join_type,
+      # Join ids
+      do_join = switch(self$join_type, # choose a function
         "left" = dplyr::left_join,
         "right" = dplyr::right_join,
         "full" = dplyr::full_join,
@@ -157,14 +160,89 @@ CompareID <- R6::R6Class(
     #' @description
     #' Add a step to id1, id2 or both
     #'
-    #' @param which which table add the step (all, id1 or id2)
+    #' @param type string. Select the type of step/function to apply.
+    #' @param ... Other arguments of the function that will be applied.
+    #' - replace: pattern, position
+    #' - manual: match
+    #' @param which which id add the step (all, id1 or id2)
     #'
     #' @return Updates self$steps_id1 and self$steps_id2
     #'
-    add_step = function(which = c("all", "id1", "id2")) {
+    add_step = function(type = list(NULL, "replace", "lower", "manual"),
+                        ...,
+                        which = c("all", "id1", "id2")) {
 
+      which = which[1]
+      stopifnot(which %in% c("all", "id1", "id2"))
+
+      if (which == "id1" || which == "all") {
+        Step$new(type, ...) |>
+          self$steps_id1$add_step()
+      }
+
+      if (which == "id2" || which == "all") {
+        Step$new(type, ...) |>
+          self$steps_id2$add_step()
+      }
+
+      return(invisible(self))
+    },
+
+
+    #' @description
+    #' Print some personalized info in the class
+    #' @param show_fields bool. If we want to show all the fields of the class.
+    #' @param show_steps bool. If we want to show the steps applied at the moment.
+    #' @param show_result bool. If we want to show the result
+    #' @param show_misses bool. If we want to show the miss matches of the result.
+    #' @param show_matches bool. If we want to show the matches of the result.
+    #' @return Void
+    #'
+    print = function(show_fields  = FALSE,
+                     show_steps   = TRUE,
+                     show_result  = FALSE,
+                     show_misses  = TRUE,
+                     show_matches = FALSE) {
+      cat("Class: Step_manager\n")
+      cat("-------------------\n\n")
+
+      if (show_steps) {
+        cat("Steps id1:\n")
+        print(self$steps_id1$info)
+        cat("Steps id2:\n")
+        print(self$steps_id2$info)
+      }
+
+      if (show_fields) {
+        cat("\nID 1:\n")
+        print(self$id1)
+        cat("\nID 2:\n")
+        print(self$id2)
+
+        cat("\nID name:\n")
+        print(self$id_name)
+
+        cat("\nJoin type:\n")
+        print(self$join_type)
+      }
+
+      if (show_result) {
+        cat("\nJoin result:\n")
+        print(self$join_result)
+      }
+
+      if (show_misses) {
+        cat("\n   MISS\n")
+        cat("---------\n")
+        print(self$join_miss)
+      }
+
+      if (show_matches) {
+        cat("\n   MATCH\n")
+        cat("---------\n")
+        print(self$join_match)
+      }
     }
-
 
   ),
 
@@ -176,6 +254,8 @@ CompareID <- R6::R6Class(
     #' @examples
     #' CompareID$new(table1, table2, "municipi")$join()$join_miss
     join_miss = function() {
+      self$join()
+
       result <- self$join_result |>
         dplyr::filter(is.na(original))
 
@@ -188,6 +268,8 @@ CompareID <- R6::R6Class(
     #' @examples
     #' CompareID$new(table1, table2, "municipi")$join()$join_miss
     join_match = function() {
+      self$join()
+
       result <- self$join_result |>
         dplyr::filter(!is.na(original))
 

@@ -53,3 +53,11 @@ test_that("join_match", {
   expect_equal(exemple$join()$join_match,
                checker)
 })
+
+test_that("add_Step", {
+  exemple <- CompareID$new(table1, table2, "municipi")
+  exemple$add_step("lower")
+  exemple$add_step("replace", "l'")
+  exemple$do_steps()
+  #print(exemple, show_id = T)
+})

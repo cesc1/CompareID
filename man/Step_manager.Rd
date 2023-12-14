@@ -31,6 +31,8 @@ Move a step, from one row to another.
 
 Execute the steps in order.
 
+Print the info method
+
 Displays the number of steps of the process.
 
 Show basic info
