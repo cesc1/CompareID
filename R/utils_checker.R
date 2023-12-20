@@ -15,6 +15,8 @@
 #'
 #' @return Boolean
 #'
+#' @export
+#'
 #' @examples
 #' # Check the type
 #' checkvar(123, type = "integer")

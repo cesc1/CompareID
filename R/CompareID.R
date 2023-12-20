@@ -4,6 +4,8 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom dplyr select all_of left_join right_join full_join inner_join filter
+#'              tibble distinct rename count mutate
+#' @export
 
 CompareID <- R6::R6Class(
   "CompareID",
@@ -22,7 +24,8 @@ CompareID <- R6::R6Class(
     #' a vector of length 1 or 2, depending if the name is the same or not.
     id_name = NULL,
 
-    #' @field join_type String. Type of join to use (left, right, full, inner)
+    #' @field join_type
+    #' . Type of join to use (left, right, full, inner)
     join_type = NULL,
 
     #' @field join_result Tibble. The result of the join
@@ -44,7 +47,7 @@ CompareID <- R6::R6Class(
     #' @return A CompareID object
     #' @examples
     #' CompareID$new(table1, table2, "municipi")
-    initialize = function(dades1, dades2, id, join_type = "left") {
+    initialize = function(dades1, dades2, id, join_type = c("left", "right", "full", "inner")) {
 
       # CHECK
         # dades1 dades2
@@ -61,6 +64,7 @@ CompareID <- R6::R6Class(
       stopifnot( checkvar(id, type = "character", len = c(1, 2)))
 
         # join_type
+      join_type <- join_type[1]
       stopifnot( checkvar(join_type, type = "character", len = 1))
       stopifnot(join_type %in% c("left", "right", "full", "inner"))
 
@@ -102,10 +106,10 @@ CompareID <- R6::R6Class(
     join = function(...) {
 
       # Reset preprocessing steps
-      self$reset_steps()
+      private$reset_steps()
 
       # Apply preprocessing steps
-      self$do_steps()
+      private$do_steps()
 
       # Join ids
       do_join = switch(self$join_type, # choose a function
@@ -117,43 +121,51 @@ CompareID <- R6::R6Class(
       )
 
       self$join_result <- do_join(
-        self$id1["id"], # only id column
-        self$id2,       # id + original, to check misses/matches
+        self$id1,
+        self$id2,
         by = "id",
         ...
-      )
-
-      return(invisible(self))
-    },
-
-    #' @description
-    #' Apply the preprocessing steps stored in steps_ids, to its respective ids.
-    #' @return Updates self$id1 and self$id2 with the steps applied
-    #'
-    do_steps = function() {
-
-      self$id1 <- self$id1 |>
-        self$steps_id1$do_steps()
-
-      self$id2 <- self$id2 |>
-        self$steps_id2$do_steps()
+      ) |>
+        dplyr::distinct()
 
       return(invisible(self))
     },
 
 
     #' @description
-    #' Reset the preprocessing steps applied to the data. Used at the start of join.
-    #' @return Updates self$id1 and self$id2 with the originals
+    #' Do a join with dades1 and dades2, based on the transformations and
+    #' parameters of the object.
+    #' @return Updates self$join_result, and returns invisible(self).
     #'
-    reset_steps = function() {
-      self$id1 <- self$id1 |>
-        dplyr::mutate(id = original)
+    join_data = function(dades1, dades2, ...) {
 
-      self$id2 <- self$id2 |>
-        dplyr::mutate(id = original)
+      self$join(...)
 
-      return(invisible(self))
+      dades1 <- dades1 |>
+        dplyr::rename("original.x" = self$id_name[1])
+      dades2 <- dades2 |>
+        dplyr::rename("original.y" = self$id_name[2])
+
+      result <-
+        dplyr::left_join(
+          self$join_result,
+          dades1,
+          by = "original.x"
+        ) |>
+        dplyr::left_join(
+          dades2,
+          by = "original.y"
+        ) |>
+        dplyr::distinct()
+
+      # Rename original columns
+      new_names <- ifelse(self$id_name[1] == self$id_name[2],
+                          list(c(paste0(self$id_name[1], c(".x", ".y")))),
+                          list(self$id_name)) |> unlist()
+      names(result)[names(result) == "original.x"] <- new_names[1]
+      names(result)[names(result) == "original.y"] <- new_names[2]
+
+      return(result)
     },
 
 
@@ -164,11 +176,11 @@ CompareID <- R6::R6Class(
     #' @param ... Other arguments of the function that will be applied.
     #' - replace: pattern, position
     #' - manual: match
-    #' @param which which id add the step (all, id1 or id2)
-    #'
+    #' @param which character. Which id add the step (all, id1 or id2)
+    #' @param func function. A function step to process the tibble "dades".
     #' @return Updates self$steps_id1 and self$steps_id2
     #'
-    add_step = function(type = list(NULL, "replace", "lower", "manual"),
+    add_step = function(type = list(NULL, "replace", "lower", "manual", "function"),
                         ...,
                         which = c("all", "id1", "id2")) {
 
@@ -196,17 +208,29 @@ CompareID <- R6::R6Class(
     #' @param show_result bool. If we want to show the result
     #' @param show_misses bool. If we want to show the miss matches of the result.
     #' @param show_matches bool. If we want to show the matches of the result.
+    #' @param show_dup bool. If we want to show if id1 or id2 have duplicates.
+    #'
     #' @return Void
     #'
     print = function(show_fields  = FALSE,
                      show_steps   = TRUE,
                      show_result  = FALSE,
                      show_misses  = TRUE,
-                     show_matches = FALSE) {
+                     show_matches = FALSE,
+                     show_dup = TRUE) {
       cat("Class: Step_manager\n")
       cat("-------------------\n\n")
 
+      if (show_dup) {
+        dup <- self$is_duplicate()
+        cat("\nDUPLICATES\n")
+        cat("----------")
+        cat("\nId1: "); cat(ifelse(dup["id1"], "SI", "NO"))
+        cat("\nId2: "); cat(ifelse(dup["id2"], "SI", "NO"))
+      }
+
       if (show_steps) {
+        cat("\n")
         cat("Steps id1:\n")
         print(self$steps_id1$info)
         cat("Steps id2:\n")
@@ -242,22 +266,94 @@ CompareID <- R6::R6Class(
         cat("---------\n")
         print(self$join_match)
       }
+    },
+
+
+    #' @description
+    #' Return the missing matches of the secondary table of the join
+    #' @return if view = T, list of tibbles. if view = F, named vector of length 2
+    #' @examples
+    #' CompareID$new(table1, table2, "municipi")$join()$join_search
+    is_duplicate = function(view = FALSE) {
+      # Type check
+
+      dup1 <- self$id1 |>
+        dplyr::count(id) |>
+        dplyr::filter(n > 1)
+      dup2 <- self$id2 |>
+        dplyr::count(id) |>
+        dplyr::filter(n > 1)
+
+      result <- c("id1" = nrow(dup1) > 0,
+                  "id2" = nrow(dup2) > 0)
+
+      if (view) {
+        return(
+          list(id1 = dup1,
+               id2 = dup2)[result])
+      }
+
+      return(result)
     }
 
   ),
 
+  # PRIVATE
+  private = list(
+
+    #' @description
+    #' Apply the preprocessing steps stored in steps_ids, to its respective ids.
+    #' @return Updates self$id1 and self$id2 with the steps applied
+    #'
+    do_steps = function() {
+
+      self$id1 <- self$id1 |>
+        self$steps_id1$do_steps()
+
+      self$id2 <- self$id2 |>
+        self$steps_id2$do_steps()
+
+      return(invisible(self))
+    },
+
+
+    #' @description
+    #' Reset the preprocessing steps applied to the data. Used at the start of join.
+    #' @return Updates self$id1 and self$id2 with the originals
+    #'
+    reset_steps = function() {
+      self$id1 <- self$id1 |>
+        dplyr::mutate(id = original)
+
+      self$id2 <- self$id2 |>
+        dplyr::mutate(id = original)
+
+      return(invisible(self))
+    }
+  ),
+
   # ACTIVE
   active = list(
+
     #' @description
-    #' Return the missing matches of the join
+    #' Return the missing matches of the main table of the join
     #' @return data.frame
     #' @examples
     #' CompareID$new(table1, table2, "municipi")$join()$join_miss
     join_miss = function() {
+
       self$join()
 
+      # Depends on join_type, we search NAs in diferent columns (original.x/y)
+      j_res <- self$join_result
+      NA_search <- switch(self$join_type,
+                          "left"  = is.na(j_res$original.y),
+                          "right" = is.na(j_res$original.x),
+                          "inner" = is.na(j_res$id), # can't be NA
+                          "full"  = is.na(j_res$original.x) | is.na(j_res$original.y))
+
       result <- self$join_result |>
-        dplyr::filter(is.na(original))
+        dplyr::filter(NA_search)
 
       return(result)
     },
@@ -266,12 +362,30 @@ CompareID <- R6::R6Class(
     #' Return the matches of the join
     #' @return data.frame
     #' @examples
-    #' CompareID$new(table1, table2, "municipi")$join()$join_miss
+    #' CompareID$new(table1, table2, "municipi")$join()$join_match
     join_match = function() {
       self$join()
 
       result <- self$join_result |>
-        dplyr::filter(!is.na(original))
+        dplyr::filter(!is.na(original.y))
+
+      return(result)
+    },
+
+
+    #' @description
+    #' Return the missing matches of the secondary table of the join
+    #' @return data.frame
+    #' @examples
+    #' CompareID$new(table1, table2, "municipi")$join()$join_search
+    join_search = function() {
+      new_checker <- self$clone()
+      new_checker$join_type = switch(self$join_type,
+                                     "left"  = "right",
+                                     "right" = "left",
+                                     "inner" = "inner",
+                                     "full"  = "full")
+      result <- new_checker$join_miss
 
       return(result)
     }

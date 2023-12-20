@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom dplyr tibble add_row filter row_number bind_rows
 #'
 
 Step_manager <- R6::R6Class(
@@ -21,8 +22,6 @@ Step_manager <- R6::R6Class(
     #' @description
     #' Create object of the class.
     #' @return A Step_manager object.
-    #' @examples
-    #' Step_manager$new()
     #'
     initialize = function() {
       self$.steps <- dplyr::tibble(step  = list())

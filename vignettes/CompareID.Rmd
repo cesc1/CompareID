@@ -1,0 +1,215 @@
+---
+title: "CompareID"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{CompareID}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(compareid)
+```
+
+
+
+# Basic example
+
+We're going to play with the package data, `table1` and `table2`.
+
+```{r results = 'asis', echo = F}
+knitr::kable(table1)
+```
+
+```{r results = 'asis', echo = F}
+knitr::kable(table2)
+```
+
+
+## Data preparation
+
+### Creating the object
+
+We have to select the column that we want to work with. 
+The default join type is left.
+
+```{r}
+ids <- CompareID$new(table1, table2, "municipi")
+
+print(ids, show_fields = TRUE)
+```
+
+## Steps
+
+If we print the object right away, we can see the miss matches.
+
+This shows the fields from the first table, that where not found at the second table.
+
+```{r}
+# ids$join_miss
+ids
+```
+
+To find the fields that didn't match from the second table:
+
+```{r}
+ids$join_search
+```
+
+We can see that we could apply some transformations.
+
+- All tables: To_lower all the letters.
+- 1st table: Remove ", l'" pattern
+- 2nd table: Remove "l' " patter
+- 2nd table: Change "alella" -> "alélla"
+- 2nd table: Change "arenys mar" -> "arenys de mar"
+
+```{r}
+ids$add_step(type = "lower", which = "all")
+ids$add_step(type = "replace", pattern = ", l'",
+             position = "end", which = "id1")
+ids$add_step(type = "replace", pattern = "l'",
+             position = "start", which = "id2")
+ids$add_step(type = "manual", match = c("alélla" = "alella",
+                                        "arenys mar" = "arenys de mar"), which = "id1")
+```
+
+## Apply the steps
+
+Printing the object, the steps apply automatically:
+
+```{r}
+ids
+```
+
+To explicitly apply the steps, use `join()`:
+
+```{r}
+ids$join()
+ids$join_miss   # Veure els que no s'han trobat
+ids$join_search # Veure els que no s'han trobat de l'altra taula
+```
+
+Using join_miss or join_search they apply too.
+
+## Final merge:
+
+To get the final ids result:
+
+```{r}
+ids$join_result
+```
+
+To get the complete merged data:
+
+```{r}
+ids$join_data(table1, table2)
+```
+
+
+
+# Complex example
+
+
+We're going to play with the package data, `table_complex1` and `table_complex2`.
+
+```{r results = 'asis', echo = F}
+dplyr::tibble(table_complex1)
+```
+
+```{r results = 'asis', echo = F}
+dplyr::tibble(table_complex2)
+```
+
+
+## Data preparation
+
+### Creating the object
+
+Load the data to the object:
+
+```{r}
+dades <- CompareID$new(table_complex1,
+                       table_complex2,
+                       "municipi")
+```
+
+```{r}
+dades
+```
+
+We have 143 missing matches!
+
+If we `View(dades$join_miss)`, we can see the miss matches in detail.
+
+### Apply steps
+
+#### The first try
+
+One strategy is having a `View(dades$join_search)` window to search a pattern, and 
+filter something similar to the first miss.
+
+In our case, if we filter by "Alam" we find:
+
+```{r}
+dades$join_search |> 
+  dplyr::filter(stringr::str_detect(id, "Alam"))
+```
+
+We see a pattern, where some prepositions are at the end. We could delete
+this prepositions and see if we improve our matches a bit:
+
+```{r}
+dades$add_step(type = "replace",
+               which = "id2",
+               pattern = c(", el", ", la", ", els", ", les"),
+               position = "end")
+
+dades
+```
+
+There are only 35 miss matches now!
+
+
+#### Modify a step
+
+We can se that there is an extra preposition ", l'", and ", Es".
+
+We can create the object again, or delete the step and add a new one.
+
+```{r}
+dades$steps_id2$remove_step(1)
+dades$add_step(type = "replace",
+               which = "id2",
+               pattern = c(", el", ", la", ", els", ", les", ", l'", ", Es"),
+               position = "end")
+
+dades
+```
+
+
+#### Analisis of miss matches one by one
+
+A lot of the remaining municipalities are not from catalonia (Alfajarín, Biescas...) so we could remove them at the start, when we construct the object.
+
+For specific matches, we could do a manual step:
+
+```{r}
+dades$add_step(type = "manual",
+               which = "id2",
+               match = c("Brunyola i Sant Martí Sapresa" = "Brunyola",
+                         "Calonge i Sant Antoni" = "Calonge"))
+
+dades
+```
+
+The miss matches are reduced to 16!
+
+If there are a lot more miss matches and don't see any more patterns,we could stop and try to use the package [fuzzyjoin](https://cran.r-project.org/web/packages/fuzzyjoin/readme/README.html) to get the miss match distance, and analize / filter from there.

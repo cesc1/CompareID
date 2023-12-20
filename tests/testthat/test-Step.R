@@ -38,12 +38,12 @@ test_that("step to_lower", {
 
 
 test_that("step manual", {
-  taula <- tibble(id = c(
+  taula <- dplyr::tibble(id = c(
     "hola",
     "sabe",
     "que pasa"
   ))
-  taula_res <- tibble(id = c(
+  taula_res <- dplyr::tibble(id = c(
     "hola",
     "sape",
     "adeu"
@@ -62,4 +62,14 @@ test_that("step manual", {
   expect_equal(Step$new(type = "manual", match = vector_equival)$.step(taula),
                taula_res)
   expect_error(Step$new(type = "manual", match = c(1:2))$.step(taula))
+})
+
+test_that("step_function", {
+  taula <- dplyr::tibble(id = c("Hola", "COMP", "ESTAS", "BaBE", "scak"))
+
+  res <- Step$new(type = "function", function(dades) {
+    dplyr::mutate(dades, id = stringr::str_to_lower(id))
+  })$.step(taula)
+
+  expect_equal(res, dplyr::tibble(id = stringr::str_to_lower(taula$id)))
 })

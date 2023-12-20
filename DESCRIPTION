@@ -1,19 +1,16 @@
 Package: compareid
 Title: Make 2 columns match
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Francesc", "Aguirre", , "francescaguirre@gencat.cat", role = c("aut", "cre"))
 Description: Sometimes there is a need to apply a join, but the id columns
-    are a bit different (cities, names...). This package helps in this
-    situation.
+    are a bit different (cities, names...). This package helps to do the first 
+    preprocessing steps. To apply the final ones, you can try fuzzyjoin.
 License: MIT + file LICENSE
 Imports: 
     dplyr,
     R6,
-    rio,
     stringr,
-    tibble,
-    tidyr
 Suggests: 
     knitr,
     rmarkdown,

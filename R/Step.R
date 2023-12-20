@@ -3,7 +3,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom dplyr mutate
+#' @importFrom dplyr mutate tibble add_row
 #' @importFrom stringr str_replace str_replace_all
 #'
 
@@ -14,7 +14,7 @@ Step <- R6::R6Class(
     # FIELDS
 
     #' @field type char. The type of step to apply.
-    #' Can be: c("replace", "lower", "manual")
+    #' Can be: c("replace", "lower", "manual", "function")
     #'
     .type = NULL,
     #' @field .step function. A step to aply to CompareID
@@ -31,10 +31,9 @@ Step <- R6::R6Class(
     #' - replace: pattern, position
     #' - manual: match
     #' @return A Step object.
-    #' @examples
-    #' Step$new(type = "replace", pattern = "a")
     #'
-    initialize = function(type = list(NULL, "replace", "lower", "manual"), ...) {
+    initialize = function(type = list(NULL, "replace", "lower", "manual", "function"),
+                          ...) {
       # Add type
       type = type[[1]]
       stopifnot(checkvar(type, "character"))
@@ -85,9 +84,10 @@ Step <- R6::R6Class(
     #'
     choose_step_type = function(...) {
       result <- switch(self$.type,
-        "replace" = private$step_replace_pat(...),
-        "lower"  = private$step_to_lower(),
-        "manual" = private$step_manual(...),
+        "replace"  = private$step_replace_pat(...),
+        "lower"    = private$step_to_lower(),
+        "manual"   = private$step_manual(...),
+        "function" = private$step_function(...),
         stop("type not found.")
       )
       return(result)
@@ -113,6 +113,12 @@ Step <- R6::R6Class(
       stopifnot(position %in% c("all", "one", "start", "end"))
 
       # Preprocessing pattern
+      pattern <- switch(position,
+                        "all" =   pattern,
+                        "one" =   pattern,
+                        "start" = paste0("^", pattern),
+                        "end" =   paste0(pattern, "$")
+      )
       pattern <- ifelse(length(pattern) > 1,
              paste(pattern, collapse = "|"),
              pattern)
@@ -120,12 +126,7 @@ Step <- R6::R6Class(
       # Add fields
       private$.position = position
       private$.replace = replace
-      private$.pattern <- switch( position,
-        "all" =   pattern,
-        "one" =   pattern,
-        "start" = paste0("^", pattern),
-        "end" =   paste0(pattern, "$")
-      )
+      private$.pattern <- pattern
 
       result <- ifelse(
         position == "all",
@@ -176,7 +177,9 @@ Step <- R6::R6Class(
       result <- function(dades) {
         idx_match <- match(private$.match$search,
                            dades$id)
-        stopifnot(!any(is.na(idx_match))) # if NA stop
+
+        if (any(is.na(idx_match))) # If match not found, stop!
+          stop("Equivalence not found! Try the manual step again changing the table.")
 
         dades |>
           dplyr::mutate(
@@ -185,6 +188,20 @@ Step <- R6::R6Class(
                          private$.match$replace))
       }
       return(result)
+    },
+
+
+    #' @description
+    #' If type = "function", will create a step with a custom function.
+    #' The custom function uses "dades", and this data.frame has a column id
+    #' that you can transform, and return the next table.
+    #' @param fun function.
+    #' @return function
+    #'
+    step_function = function(fun) {
+      stopifnot(checkvar(fun, type = "function"))
+
+      return(fun)
     }
 
   ),

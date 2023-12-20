@@ -22,11 +22,15 @@ Can be: c("all", "one", "start", "end")}
 \item{replace}{string. The replacement of the pattern}
 
 \item{match}{list or char named vector. Example: c(search = "replace")}
+
+\item{fun}{function.}
 }
 \value{
 A Step object.
 
 Void
+
+function
 
 function
 
@@ -52,13 +56,17 @@ to lower from a dataset.
 If type = "manual", will create a step to replace an exact
 match from a dataset.
 
+If type = "function", will create a step with a custom function.
+The custom function uses "dades", and this data.frame has a column id
+that you can transform, and return the next table.
+
 Info: Show basic info
 }
 \section{Fields}{
 
 \describe{
 \item{\code{type}}{char. The type of step to apply.
-Can be: c("replace", "lower", "manual")}
+Can be: c("replace", "lower", "manual", "function")}
 
 \item{\code{.step}}{function. A step to aply to CompareID}
 
@@ -73,7 +81,3 @@ Can be: c("all", "one", "start", "end")}
 It uses exact matches. To create, list("search" = "replace")}
 }}
 
-\examples{
-Step$new(type = "replace", pattern = "a")
-
-}

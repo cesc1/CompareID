@@ -44,7 +44,3 @@ Show basic info
 and the order which they are applied}
 }}
 
-\examples{
-Step_manager$new()
-
-}
