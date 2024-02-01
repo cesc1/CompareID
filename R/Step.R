@@ -173,18 +173,26 @@ Step <- R6::R6Class(
         search = names(match),
         replace = unlist(match)
       )
-      # Result
+
+      # Result function
       result <- function(dades) {
-        idx_match <- which(dades$id %in% private$.match$search)
 
-        if (any(is.na(idx_match))) # If match not found, stop!
-          stop("Equivalence not found! Try the manual step again changing the table.")
+        for (row in private$.match |> nrow() |> seq_len()) { # Iterate because if not, replace has warnings
+          search  <- private$.match$search[row]
+          replace <- private$.match$replace[row]
 
-        dades |>
-          dplyr::mutate(
-            id = replace(id,
-                         idx_match,
-                         private$.match$replace))
+          idx_match <- which(dades$id %in% search)
+          if (length(idx_match) == 0) # If match not found, stop!
+            stop("Equivalence not found! Try the manual step again, changing the equivalence.")
+
+          # Update dades
+          dades <- dades |>
+            dplyr::mutate(
+              id = replace(x = id,
+                           list = idx_match,
+                           values = replace))
+        }
+        return(dades)
       }
       return(result)
     },
