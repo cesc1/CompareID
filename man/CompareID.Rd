@@ -13,7 +13,7 @@
 
 \item{...}{Other arguments of the function that will be applied.
 \itemize{
-\item replace: pattern, position
+\item replace: pattern, position, replace
 \item manual: match
 }}
 

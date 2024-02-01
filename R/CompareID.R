@@ -56,7 +56,7 @@ CompareID <- R6::R6Class(
 
         # id_name
       if(missing(id)) {
-        self$id_name <- c(
+        id <- c(
           names(dades1)[1],
           names(dades2)[1]
         )
@@ -65,7 +65,7 @@ CompareID <- R6::R6Class(
 
         # join_type
       join_type <- join_type[1]
-      stopifnot( checkvar(join_type, type = "character", len = 1))
+      stopifnot(checkvar(join_type, type = "character", len = 1))
       stopifnot(join_type %in% c("left", "right", "full", "inner"))
 
       # PROCESS
@@ -73,6 +73,7 @@ CompareID <- R6::R6Class(
       self$id_name <- ifelse(length(id) == 1,
                              list(c(id, id)),
                              list(c(id))) |> unlist()
+      rm(id) # delete to avoid confusions with column name "id"
 
         # id1, id2
       self$id1 <- dplyr::select(dades1, dplyr::all_of(self$id_name[1])) |>
@@ -82,8 +83,8 @@ CompareID <- R6::R6Class(
 
       colnames(self$id1) <- "id" # Rename column ids
       colnames(self$id2) <- "id"
-      self$id1 <- self$id1 |> mutate(original = id)
-      self$id2 <- self$id2 |> mutate(original = id)
+      self$id1 <- self$id1 |> dplyr::mutate(original = id)
+      self$id2 <- self$id2 |> dplyr::mutate(original = id)
 
         # join_type
       self$join_type <- join_type
@@ -174,7 +175,7 @@ CompareID <- R6::R6Class(
     #'
     #' @param type string. Select the type of step/function to apply.
     #' @param ... Other arguments of the function that will be applied.
-    #' - replace: pattern, position
+    #' - replace: pattern, position, replace
     #' - manual: match
     #' @param which character. Which id add the step (all, id1 or id2)
     #' @param func function. A function step to process the tibble "dades".

@@ -14,11 +14,23 @@ test_that("constructor", {
   id_name_test = c("municipi", "municipi")
   expect_identical(CompareID$new(table1, table2, id_name_test)$id_name,
                    id_name_test)
+    # Multiple id
+  tbl1 <- table1 |> dplyr::rename(x1 = municipi)
+  tbl2 <- table2 |> dplyr::rename(x2 = municipi)
+
+  expect_identical(
+    CompareID$new(tbl1, tbl2, c("x1", "x2"))$id_name,
+    c("x1", "x2")
+  )
+     # No id
+  expect_identical(
+    CompareID$new(table1, table2)$id_name,
+    rep("municipi", 2)
+  )
 
   # field error
   expect_error(CompareID$new(1, table2, "municipi"))
   expect_error(CompareID$new(table1, 2, "municipi"))
-  expect_error(CompareID$new(table1, table2))
   expect_error(CompareID$new(table1, table2, 1))
   expect_error(CompareID$new(table1, table2, c("a", "b", "c")))
   expect_error(CompareID$new(table1, table2, c("municipi", "unaltrestring")))

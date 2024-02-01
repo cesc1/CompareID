@@ -175,8 +175,7 @@ Step <- R6::R6Class(
       )
       # Result
       result <- function(dades) {
-        idx_match <- match(private$.match$search,
-                           dades$id)
+        idx_match <- which(dades$id %in% private$.match$search)
 
         if (any(is.na(idx_match))) # If match not found, stop!
           stop("Equivalence not found! Try the manual step again changing the table.")
