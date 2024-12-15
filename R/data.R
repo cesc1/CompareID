@@ -10,7 +10,6 @@
 #'   \item{municipi}{The city name, or the id that we want to match}
 #'   \item{info}{Some random info, in this case the row position}
 #' }
-#'
 "table1"
 
 
@@ -26,7 +25,6 @@
 #'   \item{municipi}{The city name, or the id that we want to match}
 #'   \item{info}{Some random info, in this case the row position}
 #' }
-#'
 "table2"
 
 
@@ -42,7 +40,6 @@
 #'   \item{municipi}{The city name, or the id that we want to match}
 #'   \item{info}{Some random info, in this case a number}
 #' }
-#'
 "table_complex1"
 
 
@@ -64,7 +61,6 @@
 #'   \item{regioPolicial}{Larger police area}
 #' }
 #' @source <https://www.idescat.cat/codis/?id=50&n=9>
-#'
 "table_complex2"
 
 
